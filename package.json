@@ -1,0 +1,22 @@
+{
+  "name": "agentsrc",
+  "description": "agentsrc - sync configuration across AI agent harnesses",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "agentsrc": "./dist/index.js"
+  },
+  "files": ["dist"],
+  "license": "AGPL-3.0",
+  "scripts": {
+    "build": "bun build ./index.ts --outdir ./dist",
+    "prepublishOnly": "bun run build"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
