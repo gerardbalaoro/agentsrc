@@ -20,6 +20,9 @@
     "#test/*": "./test/*",
     "#*": "./src/*"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "bun build ./src/index.ts --target node --outdir ./dist --banner '#!/usr/bin/env node'",
     "prepublishOnly": "bun run build",
@@ -30,9 +33,14 @@
     "typecheck": "bun check",
     "prepare": "lefthook install",
     "test": "bun test",
-    "dev": "bun run ./src/index.ts"
+    "dev": "bun run ./src/index.ts",
+    "changeset": "changeset",
+    "version-packages": "changeset version && bun install --lockfile-only --ignore-scripts",
+    "release": "bun run build && changeset publish",
+    "compile": "bun run scripts/compile.ts"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.3",
     "@crustjs/core": "^0.6.0",
     "@crustjs/extensions": "^0.6.0",
     "@crustjs/prompts": "^0.3.0",

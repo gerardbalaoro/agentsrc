@@ -1,0 +1,24 @@
+name: CI
+on:
+  pull_request:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 20
+      - run: bun install --frozen-lockfile
+      - run: bun run format:check
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun test --timeout 15000
+      - run: bun run build
+      - run: npm pack --ignore-scripts
