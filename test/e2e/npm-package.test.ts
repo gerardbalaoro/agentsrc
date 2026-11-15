@@ -1,8 +1,7 @@
 import { beforeAll, expect, test } from "bun:test";
 import { execFile } from "node:child_process";
-import { readdir, rm } from "node:fs/promises";
+import { mkdir, readdir, rm } from "node:fs/promises";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 
 import { buildCli, createSandbox } from "#test/support/cli.ts";
@@ -30,6 +29,9 @@ test("the packed npm install provides working arc and agentsrc commands and supp
   };
 
   try {
+    // npm file specs are filesystem paths; a tilde catches accidental URL percent-encoding.
+    const packed = path.join(sandbox.home, "package~fixture");
+    await mkdir(packed);
     const npm = Bun.which(process.platform === "win32" ? "npm.cmd" : "npm");
 
     if (npm === null) {
@@ -43,16 +45,12 @@ test("the packed npm install provides working arc and agentsrc commands and supp
         ? [path.join(path.dirname(npm), "node_modules/npm/bin/npm-cli.js")]
         : [];
 
-    await run(
-      command,
-      [...prefix, "pack", "--ignore-scripts", "--pack-destination", sandbox.home],
-      {
-        cwd: Root,
-        env,
-      }
-    );
+    await run(command, [...prefix, "pack", "--ignore-scripts", "--pack-destination", packed], {
+      cwd: Root,
+      env,
+    });
 
-    const files = await readdir(sandbox.home);
+    const files = await readdir(packed);
     const archives = files.filter((file) => file.endsWith(".tgz"));
     expect(archives).toHaveLength(1);
     const [filename] = archives;
@@ -61,7 +59,7 @@ test("the packed npm install provides working arc and agentsrc commands and supp
       throw new Error("npm pack created no package.");
     }
 
-    const archive = path.join(sandbox.home, filename);
+    const archive = path.join(packed, filename);
     await run(
       command,
       [
@@ -108,7 +106,7 @@ test("the packed npm install provides working arc and agentsrc commands and supp
 
     const npx = await run(
       npxCommand,
-      [...npxPrefix, "--offline", "--yes", pathToFileURL(archive).href, "--version"],
+      [...npxPrefix, "--offline", "--yes", `file:${archive}`, "--version"],
       {
         cwd: sandbox.home,
         env,

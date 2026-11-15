@@ -69,6 +69,8 @@ async function createProject() {
   const sandbox = await createSandbox();
   await writeFiles(sandbox.project, {
     ".agents/agents.toml": 'agents = ["claude-code", "codex"]\n',
+    // Cloning must preserve the fixture bytes even when the machine enables core.autocrlf.
+    "vendor/.gitattributes": "* -text\n",
     "vendor/alpha/SKILL.md": Alpha,
     "vendor/beta/SKILL.md": Beta,
   });
