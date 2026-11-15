@@ -9,12 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: oven-sh/setup-bun@v2.2.0
-        with:
-          bun-version-file: package.json
       - uses: actions/setup-node@v7.1.0
         with:
           node-version: 24
+      - uses: jdx/mise-action@v5.2.8
+        with:
+          install_args: --locked bun
       - run: bun install --frozen-lockfile
       - run: bun run format:check
       - run: bun run lint
@@ -22,3 +22,58 @@ jobs:
       - run: bun test --timeout 15000
       - run: bun run build
       - run: npm pack --ignore-scripts
+  native:
+    name: Native (${{ matrix.platform }})
+    needs: check
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x64
+            runner: ubuntu-24.04
+            extension: ""
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            extension: ""
+          - platform: macos-x64
+            runner: macos-15-intel
+            extension: ""
+          - platform: macos-arm64
+            runner: macos-15
+            extension: ""
+          - platform: windows-x64
+            runner: windows-2025
+            extension: .exe
+          - platform: windows-arm64
+            runner: windows-11-arm
+            extension: .exe
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+      - uses: jdx/mise-action@v5.2.8
+        with:
+          install_args: --locked bun
+      - run: bun --revision
+      - run: bun install --frozen-lockfile
+      - run: bun run compile ${{ matrix.platform }}
+      - name: Extract the executable from the release archive
+        run: |
+          version=$(node -p "require('./package.json').version")
+          tar -xzf "release/agentsrc-v${version}-${{ matrix.platform }}.tar.gz" -C release
+      - name: Test the release executable
+        run: bun test test/e2e --timeout 30000
+        env:
+          ARC_TEST_EXECUTABLE: release/arc${{ matrix.extension }}
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: binary-${{ matrix.platform }}
+          path: |
+            release/*.tar.gz
+            release/*.sha256
+          if-no-files-found: error

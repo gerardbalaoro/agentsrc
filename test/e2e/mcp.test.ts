@@ -383,10 +383,28 @@ command = "db"
 });
 
 async function stub(sandbox: Sandbox, name: string, body: string) {
-  await writeFiles(sandbox.home, { [`bin/${name}`]: `#!/usr/bin/env node\n${body}\n` });
-  await chmod(path.join(sandbox.home, "bin", name), 0o755);
+  const bin = path.join(sandbox.home, "bin");
 
-  return { PATH: `${path.join(sandbox.home, "bin")}:${process.env.PATH ?? ""}` };
+  if (process.platform === "win32") {
+    // A real executable exercises PATH lookup without relying on POSIX shebangs or cmd shims.
+    const source = path.join(bin, `${name}.cjs`);
+    await writeFiles(bin, { [`${name}.cjs`]: body });
+
+    const result = await Bun.build({
+      compile: { aot: true, outfile: path.join(bin, `${name}.exe`), trim: true },
+      entrypoints: [source],
+      minify: true,
+    });
+
+    if (!result.success) {
+      throw new AggregateError(result.logs, `Failed to compile the ${name} test executable.`);
+    }
+  } else {
+    await writeFiles(bin, { [name]: `#!/usr/bin/env node\n${body}\n` });
+    await chmod(path.join(bin, name), 0o755);
+  }
+
+  return { PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}` };
 }
 
 test("old excluded OpenCode is never probed; selected old OpenCode fails before any harness write", async () => {

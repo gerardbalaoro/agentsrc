@@ -1,6 +1,7 @@
 import { beforeAll, expect, test } from "bun:test";
-import { lstat, readlink, rm } from "node:fs/promises";
+import { lstat, readlink, realpath, rm } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { git } from "#test/conformance/source-fixture.ts";
 import { buildCli, createSandbox } from "#test/support/cli.ts";
@@ -17,7 +18,15 @@ test("Git installs keep existing content until update and do not add a commit fi
   await git(repo, ["init", "--quiet"]);
   await git(repo, ["add", "."]);
   await git(repo, ["commit", "--quiet", "-m", "Original"]);
-  const added = await sandbox.agents(["skills", "add", `file://${repo}`, "--skill", "alpha"]);
+
+  const added = await sandbox.agents([
+    "skills",
+    "add",
+    pathToFileURL(repo).href,
+    "--skill",
+    "alpha",
+  ]);
+
   expect(added.code).toBe(0);
   expect(
     JSON.parse(await readFileText(sandbox.project, "skills-lock.json")).skills.alpha.commit
@@ -80,9 +89,15 @@ test("sync records both domains in the lock and links installed skills", async (
   expect(lock.skills).toEqual(["alpha"]);
   expect(lock.mcp.db).toBeDefined();
   expect(await readFileText(sandbox.project, ".agents/skills/alpha/SKILL.md")).toBe(Alpha);
-  expect(await readlink(path.join(sandbox.project, ".claude/skills/alpha"))).toBe(
-    "../../.agents/skills/alpha"
+  const link = path.join(sandbox.project, ".claude/skills/alpha");
+  expect(await realpath(link)).toBe(
+    await realpath(path.join(sandbox.project, ".agents/skills/alpha"))
   );
+
+  if (process.platform !== "win32") {
+    expect(await readlink(link)).toBe("../../.agents/skills/alpha");
+  }
+
   const result1 = await sandbox.agents(["sync", "--frozen-lockfile"]);
 
   expect(result1.code).toBe(0);
@@ -232,7 +247,7 @@ test("an explicit Git SHA ref pins restores without a commit field", async () =>
   await git(repo, ["commit", "--quiet", "-m", "Original"]);
   const sha = await git(repo, ["rev-parse", "HEAD"]);
   await writeFiles(sandbox.project, {
-    ".agents/agents.toml": `agents = ["codex"]\n[skills]\nalpha = { source = "file://${repo}", ref = "${sha}" }\n`,
+    ".agents/agents.toml": `agents = ["codex"]\n[skills]\nalpha = { source = "${pathToFileURL(repo).href}", ref = "${sha}" }\n`,
   });
   const added = await sandbox.agents(["skills", "install"]);
   expect(added.code).toBe(0);

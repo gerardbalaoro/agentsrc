@@ -1,2 +1,26 @@
-[tools]
-bun = "1.4.4"
+# Dated npm artifacts keep this canary installable after GitHub's canary tag moves.
+[tool_alias]
+bun = "http:bun"
+
+[tools.bun]
+version = "1.4.4-canary.20261114.1"
+strip_components = 1
+bin_path = "bin"
+
+[tools.bun.platforms.linux-x64]
+url = "https://registry.npmjs.org/@oven/bun-linux-x64/-/bun-linux-x64-{{version}}.tgz"
+
+[tools.bun.platforms.linux-arm64]
+url = "https://registry.npmjs.org/@oven/bun-linux-aarch64/-/bun-linux-aarch64-{{version}}.tgz"
+
+[tools.bun.platforms.macos-x64]
+url = "https://registry.npmjs.org/@oven/bun-darwin-x64/-/bun-darwin-x64-{{version}}.tgz"
+
+[tools.bun.platforms.macos-arm64]
+url = "https://registry.npmjs.org/@oven/bun-darwin-aarch64/-/bun-darwin-aarch64-{{version}}.tgz"
+
+[tools.bun.platforms.windows-x64]
+url = "https://registry.npmjs.org/@oven/bun-windows-x64/-/bun-windows-x64-{{version}}.tgz"
+
+[tools.bun.platforms.windows-arm64]
+url = "https://registry.npmjs.org/@oven/bun-windows-aarch64/-/bun-windows-aarch64-{{version}}.tgz"

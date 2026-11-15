@@ -2,7 +2,9 @@
 
 ## Development
 
-[mise](https://mise.jdx.dev) installs the pinned Bun version.
+[mise](https://mise.jdx.dev) installs the pinned Bun canary. Run `mise install --locked bun` before
+development. `mise.lock` records checksums for all six platforms; the dated npm artifacts keep the
+compiler available after GitHub's canary download changes.
 
 ```bash
 bun install
@@ -35,6 +37,11 @@ locally with:
 ```bash
 bun run compile linux-x64
 ```
+
+Compilation uses Bun's experimental AoT and runtime trimming. Build on the target OS and CPU;
+cross-compilation is rejected. CI builds each of the six targets on a native runner, extracts its
+archive, and runs the end-to-end suite against that executable. Publishing uses those tested
+archives.
 
 Artifacts go to the ignored `release/` directory. The GitHub backend in mise detects platform
 archives by their names, such as `agentsrc-v0.1.0-linux-x64.tar.gz`.

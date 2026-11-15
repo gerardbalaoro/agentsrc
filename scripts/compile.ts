@@ -9,15 +9,6 @@ import { z } from "zod";
 
 import packageJson from "../package.json" with { type: "json" };
 
-const Platforms = {
-  "linux-x64": "bun-linux-x64",
-  "linux-arm64": "bun-linux-arm64",
-  "macos-x64": "bun-darwin-x64",
-  "macos-arm64": "bun-darwin-arm64",
-  "windows-x64": "bun-windows-x64",
-  "windows-arm64": "bun-windows-arm64",
-} as const;
-
 const PlatformSchema = z.enum([
   "linux-x64",
   "linux-arm64",
@@ -34,6 +25,13 @@ const NativeOS = new Map([
 
 const native = `${NativeOS.get(process.platform) ?? process.platform}-${process.arch}`;
 const platform = PlatformSchema.parse(process.argv[2] ?? native);
+
+if (platform !== native) {
+  throw new Error(
+    `AoT compilation for ${platform} requires a native runner; this host is ${native}.`
+  );
+}
+
 const extension = platform.startsWith("windows") ? ".exe" : "";
 const root = path.resolve(import.meta.dirname, "..");
 const output = path.join(root, "release");
@@ -43,10 +41,51 @@ const run = promisify(execFile);
 try {
   await mkdir(output, { recursive: true });
   const executable = path.join(staging, `arc${extension}`);
-  await Bun.build({
+
+  const result = await Bun.build({
     entrypoints: [path.join(root, "src/index.ts")],
     compile: {
-      target: Platforms[platform],
+      aot: true,
+      // Dependency globals make automatic trimming conservative. Native CI checks these exclusions.
+      trim: {
+        remove: [
+          "cli",
+          "bundler",
+          "test",
+          "inspector",
+          "profiler",
+          "image",
+          "sqlite",
+          "sql",
+          "redis",
+          "s3",
+          "html-rewriter",
+          "ffi",
+          "native-addons",
+          "native-code",
+          "webassembly",
+          "shell",
+          "webview",
+          "serve",
+          "http2",
+          "http3",
+          "websocket",
+          "udp",
+          "worker",
+          "node-vm",
+          "bun-jsc",
+          "plugin",
+          "fs-router",
+          "terminal",
+          "cron",
+          "secrets",
+          "markdown",
+          "password",
+          "temporal",
+          "repl",
+          "dialogs",
+        ],
+      },
       outfile: executable,
       autoloadDotenv: false,
       autoloadBunfig: false,
@@ -54,12 +93,14 @@ try {
     minify: true,
   });
 
-  if (platform === native) {
-    const result = await run(executable, ["--version"], { cwd: staging });
+  if (!result.success) {
+    throw new AggregateError(result.logs, "Failed to compile arc.");
+  }
 
-    if (result.stdout.trim() !== `arc v${packageJson.version}`) {
-      throw new Error("Compiled version does not match package.json.");
-    }
+  const version = await run(executable, ["--version"], { cwd: staging });
+
+  if (version.stdout.trim() !== `arc v${packageJson.version}`) {
+    throw new Error("Compiled version does not match package.json.");
   }
 
   const name = `agentsrc-v${packageJson.version}-${platform}.tar.gz`;

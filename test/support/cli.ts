@@ -7,6 +7,7 @@ import { createTempDir } from "#test/support/temp.ts";
 
 const run = promisify(execFile);
 const Entry = path.resolve(import.meta.dirname, "..", "..", "dist", "index.js");
+const Executable = process.env.ARC_TEST_EXECUTABLE;
 
 export interface CliResult {
   code: number;
@@ -18,7 +19,7 @@ export interface CliResult {
 export interface Sandbox {
   home: string;
   project: string;
-  /** Runs the built CLI under Node in the project directory. */
+  /** Runs the compiled executable when requested, otherwise the Node bundle. */
   agents: (args: string[], env?: Record<string, string>) => Promise<CliResult>;
 }
 
@@ -50,14 +51,24 @@ async function runCli(
 ): Promise<CliResult> {
   // Only what the CLI needs, so the developer's own harness settings cannot leak into a test.
   const env = {
+    APPDATA: path.join(options.home, "AppData/Roaming"),
+    ComSpec: process.env.ComSpec,
     HOME: options.home,
+    LOCALAPPDATA: path.join(options.home, "AppData/Local"),
     PATH: process.env.PATH ?? "",
+    PATHEXT: process.env.PATHEXT,
+    SystemRoot: process.env.SystemRoot,
+    TEMP: options.home,
+    TMP: options.home,
+    USERPROFILE: options.home,
     XDG_CACHE_HOME: path.join(options.home, ".cache"),
     ...options.env,
   };
 
   try {
-    const result = await run("node", [Entry, ...args], { cwd: options.cwd, env });
+    const command = Executable === undefined ? "node" : path.resolve(Executable);
+    const parameters = Executable === undefined ? [Entry, ...args] : args;
+    const result = await run(command, parameters, { cwd: options.cwd, env });
 
     return { code: 0, stderr: result.stderr, stdout: result.stdout };
   } catch (error) {
