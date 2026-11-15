@@ -1,0 +1,28 @@
+diff --git a/dist/dev/patch.js b/dist/dev/patch.js
+index 457d2f5c3938740bd7451165133d079decd1818b..51a4461d60ebc8914c101b977656c812057be087 100644
+--- a/dist/dev/patch.js
++++ b/dist/dev/patch.js
+@@ -1267,7 +1267,7 @@ function applyChanges(original, updated, changes, format, temporal = false, comm
+ 				}
+ 				if (format.inlineTableStart !== void 0 && format.inlineTableStart > 0 && isDocument(parent) && isTable(child)) {
+ 					const additionalTables = convertNestedInlineTablesToMultiline(child, original, format);
+-					insert(original, parent, child, index);
++					if (child.items.length > 0 || additionalTables.length === 0) insert(original, parent, child, index);
+ 					for (const table of additionalTables) insert(original, original, table, void 0);
+ 				} else {
+ 					let childToInsert = child;
+@@ -1303,7 +1303,13 @@ function applyChanges(original, updated, changes, format, temporal = false, comm
+ 							if (childToInsert.loc.end.line === childToInsert.loc.start.line) childToInsert.loc.end.column += columnDelta;
+ 						}
+ 					}
+-					insert(original, parent, childToInsert, resolvedIndex, void 0, inlineHostItems);
++					if (restoredKeySegments && isDocument(parent) && isKeyValue(childToInsert) && isInlineTable(childToInsert.value) && format.inlineTableStart !== void 0 && calculateTableDepth(childToInsert.key.value) < format.inlineTableStart) {
++						const separateTable = generateTable(childToInsert.key.value, format.escapeSequenceUpperCase);
++						for (const inlineItem of childToInsert.value.items) if (isInlineItem(inlineItem) && isKeyValue(inlineItem.item)) insert(original, separateTable, inlineItem.item, void 0);
++						insert(original, original, separateTable, void 0);
++						const additionalTables = convertNestedInlineTablesToMultiline(separateTable, original, format);
++						for (const table of additionalTables) insert(original, original, table, void 0);
++					} else insert(original, parent, childToInsert, resolvedIndex, void 0, inlineHostItems);
+ 					if (restoredKeySegments) restoredInsertContainers.add(parent);
+ 				}
+ 			} else if (isInlineTable(parent)) {
