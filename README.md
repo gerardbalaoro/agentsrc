@@ -1,106 +1,85 @@
 # agentsrc
 
-agentsrc installs agent skills and MCP servers from one manifest into every AI harness a project
-uses. It supports Claude Code, Codex and OpenCode v2.
+Manage agent skills and MCP servers for Claude Code, Codex, and OpenCode v2 from one configuration
+file. Share your project's setup with your team, or keep a personal setup across projects.
 
-Skill handling is compatible with the [skills.sh CLI](https://github.com/vercel-labs/skills). Both
-tools read and write the same lock file.
+- Add skills and MCP servers once and use them across your coding agents.
+- Import the skills and servers you already use.
+- Reuse shared configuration with local files or URLs.
+- Use skills from the [skills.sh ecosystem](https://github.com/vercel-labs/skills) with a compatible
+  lock file.
 
 ## Installation
 
-agentsrc needs Node 20 or later.
+Install with npm (Node 20 or later):
 
 ```bash
 npm install -g agentsrc
 ```
 
-The npm package provides `arc` and `agentsrc`. Both run the same CLI. You can also run it without
-installing globally:
-
-```bash
-npx agentsrc init
-```
-
-Standalone releases provide only `arc` and do not require Node or Bun. Install them with mise:
+Or install a standalone binary with [mise](https://mise.jdx.dev):
 
 ```bash
 mise use -g github:gerardbalaoro/agentsrc
 ```
 
+The examples use `arc`. The npm package also provides the `agentsrc` command.
+
 ## Getting Started
+
+Initialize your project, then add a skill and an MCP server:
 
 ```bash
 arc init
-arc sync --force
+arc skills add vercel-labs/agent-skills
+arc mcp add npm:@upstash/context7-mcp
 ```
 
-`init` detects project harnesses and lets you choose existing skills and MCP servers to import. Use
-`arc init -g` for global configuration and imports. The two scopes are inspected separately.
-Existing harness files remain unchanged until you sync; `--force` adopts the imports you chose.
+`init` detects your coding agents and offers to import existing skills and servers. The `add`
+commands save your choices in `.agents/agents.toml` and install them for your configured agents.
 
-To inspect candidates or initialize without prompts:
+For a project that already has a manifest, install its skills and servers with:
 
 ```bash
-arc init --list
-arc init --mcp codex:db --skill style
-arc init --yes
+arc sync
 ```
 
-`--yes` creates a manifest with detected harnesses and no imports unless you select them explicitly.
-Use `--skill '*'` or `--mcp '*'` to select all candidates of that kind. Conflicting names require an
-explicit origin such as `codex:db`. `init` never overwrites an existing manifest.
+If you imported existing entries with `init`, use `arc sync --force` to let agentsrc manage those
+entries.
 
-## Manifest
+## Configuration
 
-The manifest is `.agents/agents.toml` in a project, or `~/.agents/agents.toml` with `-g`.
+The manifest at `.agents/agents.toml` describes your project's setup:
 
 ```toml
-extends = ["https://example.com/team/agents.toml"]
 agents = ["claude-code", "codex", "opencode"]
 
 [skills]
 frontend-design = "vercel-labs/agent-skills"
-pdf = { source = "anthropics/skills", ref = "v1.2.0" }
 
 [mcp.context7]
 package = "npm:@upstash/context7-mcp"
-version = "^1"
-env = { CONTEXT7_API_KEY = "${CONTEXT7_API_KEY}" }
-
-[mcp.linear]
-url = "https://mcp.linear.app/mcp"
-headers = { Authorization = "Bearer ${LINEAR_TOKEN}" }
 ```
 
-A `${VAR}` reference is never resolved into a file. agentsrc rewrites it into each harness's own
-reference syntax.
+Use `arc init -g` for personal configuration at `~/.agents/agents.toml`. Add `-g` to subsequent
+commands to manage that setup.
 
-## Commands
+To reuse a team configuration, add `extends` at the top of your manifest:
 
-| Command                           | Result                                                       |
-| --------------------------------- | ------------------------------------------------------------ |
-| `arc init [-g]`                   | Detect harnesses, choose imports and create the manifest.    |
-| `arc sync`                        | Installs skills, then MCP servers, from the manifest.        |
-| `arc skills add <source>`         | Adds skills to the manifest and installs them.               |
-| `arc skills install`              | Installs the skills in the manifest.                         |
-| `arc skills update [names...]`    | Fetches skills again and reinstalls the ones that changed.   |
-| `arc skills list`                 | Lists skills and their status.                               |
-| `arc skills remove <names...>`    | Removes skills from the manifest and the harnesses.          |
-| `arc mcp add <package or URL>`    | Adds an MCP server to the manifest and installs it.          |
-| `arc mcp add <name> -- <command>` | Adds a server that runs a local command.                     |
-| `arc mcp install`                 | Writes the servers in the manifest into each harness config. |
-| `arc mcp update [names...]`       | Moves package servers to the newest version in range.        |
-| `arc mcp list`                    | Lists MCP servers and their status.                          |
-| `arc mcp remove <names...>`       | Removes servers from the manifest and the harness configs.   |
+```toml
+extends = ["https://example.com/team/agents.toml"]
+```
 
-Every command accepts `-g` for global scope, `-a <harness>` to limit the run, `-y` to skip prompts
-and `--dry-run` to print the plan. Run `arc <command> --help` for the other flags.
+## Everyday Commands
 
-`sync` and `install` are frozen when `CI` is set: they fail, and write nothing, if anything is out
-of date.
+| Task   | Skills                         | MCP Servers                    |
+| ------ | ------------------------------ | ------------------------------ |
+| Add    | `arc skills add <source>`      | `arc mcp add <package or URL>` |
+| List   | `arc skills list`              | `arc mcp list`                 |
+| Update | `arc skills update [names...]` | `arc mcp update [names...]`    |
+| Remove | `arc skills remove <names...>` | `arc mcp remove <names...>`    |
 
-Untracked skills and MCP servers require `--force` before agentsrc takes ownership. Unmarked harness
-copies are preserved during cleanup; use `--force` to replace them explicitly.
+See the [usage guide](docs/usage.md) for import options, configuration examples, and command
+behavior. Run `arc --help` to explore the CLI.
 
-`arc mcp list` reports incompatible entries as `unsupported`, explains why, and continues listing
-the other servers. Installation still rejects incompatible entries before writing files.
+For development and release instructions, see [Contributing](CONTRIBUTING.md).
