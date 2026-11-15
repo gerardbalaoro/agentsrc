@@ -23,7 +23,8 @@ Or install a standalone binary with [mise](https://mise.jdx.dev):
 mise use -g github:gerardbalaoro/agentsrc
 ```
 
-The examples use `arc`. The npm package also provides the `agentsrc` command.
+The examples use `arc`. Mise installations also provide `agents` and `agentsrc`; npm installations
+provide `arc` and `agentsrc`.
 
 ## Getting Started
 

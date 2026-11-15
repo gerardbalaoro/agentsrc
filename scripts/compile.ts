@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { link, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -103,10 +103,14 @@ try {
     throw new Error("Compiled version does not match package.json.");
   }
 
+  const aliases = ["agents", "agentsrc"].map((name) => `${name}${extension}`);
+  // Tar records hard links without another copy of the executable's payload.
+  await Promise.all(aliases.map((name) => link(executable, path.join(staging, name))));
+
   const name = `agentsrc-v${packageJson.version}-${platform}.tar.gz`;
   const archive = path.join(output, name);
   // GNU tar treats the colon in an absolute Windows archive path as a remote host separator.
-  await run("tar", ["-czf", name, "-C", staging, `arc${extension}`], { cwd: output });
+  await run("tar", ["-czf", name, "-C", staging, `arc${extension}`, ...aliases], { cwd: output });
 
   const checksum = createHash("sha256")
     .update(await readFile(archive))

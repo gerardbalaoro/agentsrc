@@ -31,8 +31,8 @@ Pending changesets produce a version pull request. Merge it to publish the npm p
 `v<version>` GitHub release, and attach archives plus SHA-256 checksums. Release jobs use the same
 commit and version for the npm package and executables.
 
-The archives contain only `arc` for Linux, macOS and Windows, on x64 and ARM64. Build one platform
-locally with:
+The archives contain `arc`, with `agents` and `agentsrc` hard links, for Linux, macOS and Windows on
+x64 and ARM64. Build one platform locally with:
 
 ```bash
 bun run compile linux-x64
