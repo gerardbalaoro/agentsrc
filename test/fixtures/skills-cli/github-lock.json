@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "skills": {
+    "alpha": {
+      "source": "agentsrc-fixtures/skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/alpha/SKILL.md",
+      "computedHash": "6f256e0e2cbea6ac1513757fa0fce98019dcb1fe761b13c05a2e18b4653faf77"
+    }
+  }
+}

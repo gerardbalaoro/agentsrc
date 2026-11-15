@@ -29,6 +29,7 @@
     "lint:fix": "oxlint --fix .",
     "typecheck": "bun check",
     "prepare": "lefthook install",
+    "test": "bun test",
     "dev": "bun run ./src/index.ts"
   },
   "devDependencies": {

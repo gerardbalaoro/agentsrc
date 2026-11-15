@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "skills": {
+    "alpha": {
+      "source": "./vendor/source",
+      "sourceType": "local",
+      "computedHash": "6f256e0e2cbea6ac1513757fa0fce98019dcb1fe761b13c05a2e18b4653faf77"
+    },
+    "beta": {
+      "source": "./vendor/source",
+      "sourceType": "local",
+      "computedHash": "c8ba3d605103121ca1fc5f3026b4bc448a73f6522fe4657976d1b6862b8519c9"
+    },
+    "delta": {
+      "source": "./vendor/source",
+      "sourceType": "local",
+      "computedHash": "b88adf71119f8c90a9b2d609ba927eaf493cd8e8bfd7e2bd846c1091b83c4103",
+      "skillName": "beta"
+    },
+    "gamma": {
+      "source": "{{REPO}}",
+      "sourceUrl": "{{REPO}}",
+      "sourceType": "git",
+      "skillPath": "skills/nested/group/gamma/SKILL.md",
+      "computedHash": "dcd5e1c4468379039ea3e0e607891943966d229fd843509c88d86711ab8ae6be",
+      "installMode": "copy"
+    }
+  }
+}

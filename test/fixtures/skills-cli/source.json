@@ -1,0 +1,41 @@
+{
+  "files": [
+    {
+      "path": "README.md",
+      "text": "# Test skills\n\nA source with several skills, used by the lock conformance test.\n"
+    },
+    {
+      "path": "skills/alpha/SKILL.md",
+      "text": "---\nname: alpha\ndescription: First test skill. It has nested files and a script.\n---\n# Alpha\n\nRun `scripts/run.sh`.\n"
+    },
+    {
+      "path": "skills/alpha/docs/guide.md",
+      "text": "# Guide\n\nRead this first.\n"
+    },
+    {
+      "path": "skills/alpha/metadata.json",
+      "text": "{ \"note\": \"skills.sh does not copy or hash this file\" }\n"
+    },
+    {
+      "path": "skills/alpha/scripts/run.sh",
+      "text": "#!/bin/sh\necho alpha\n",
+      "mode": 493
+    },
+    {
+      "path": "skills/beta/SKILL.md",
+      "text": "---\r\nname: beta\r\ndescription: Second test skill, with CRLF line endings.\r\n---\r\n# Beta\r\n\r\nLine endings are CRLF.\r\n"
+    },
+    {
+      "path": "skills/beta/data.bin",
+      "base64": "AAECDQr/AA0K"
+    },
+    {
+      "path": "skills/nested/group/gamma/SKILL.md",
+      "text": "---\nname: gamma\ndescription: \"Third test skill, three levels under skills/.\"\nmetadata:\n  version: \"1\"\n---\n# Gamma\n"
+    },
+    {
+      "path": "skills/nested/group/gamma/ünïcödé.md",
+      "text": "Non-ASCII file name.\n"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+---
+name: demo
+description: Download fixture
+---
+Downloaded skill.
