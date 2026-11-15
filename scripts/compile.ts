@@ -105,7 +105,8 @@ try {
 
   const name = `agentsrc-v${packageJson.version}-${platform}.tar.gz`;
   const archive = path.join(output, name);
-  await run("tar", ["-czf", archive, "-C", staging, `arc${extension}`]);
+  // GNU tar treats the colon in an absolute Windows archive path as a remote host separator.
+  await run("tar", ["-czf", name, "-C", staging, `arc${extension}`], { cwd: output });
 
   const checksum = createHash("sha256")
     .update(await readFile(archive))
