@@ -1,0 +1,10 @@
+pre-commit:
+  parallel: false
+  jobs:
+    - name: format
+      glob: "*.{js,jsx,ts,tsx,mjs,cjs,mts,cts,json,jsonc,md,mdx,yml,yaml,html,css,scss}"
+      run: bun run oxfmt --write --no-error-on-unmatched-pattern {staged_files}
+      stage_fixed: true
+    - name: lint
+      glob: "*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}"
+      run: bun run oxlint --no-error-on-unmatched-pattern {staged_files}
