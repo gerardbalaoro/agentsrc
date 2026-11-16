@@ -62,6 +62,7 @@ export function parseClaude(raw: unknown, now: number): Snapshot {
 
     return [
       {
+        id: key,
         label: key.replaceAll("_", " "),
         usedPercent: window.utilization,
         resetsAt: window.resets_at ?? null,
@@ -82,6 +83,7 @@ export function parseClaude(raw: unknown, now: number): Snapshot {
         ? "Fable reset (returns Fable weekly usage)"
         : (grant.type ?? ((grant.clears ?? []).join(", ") || "Reset")),
       expiresAt,
+      restores: grant.clears ?? [],
       expiry: expiryStatus(grant.ends_at),
       canClaim:
         grants?.eligible === true &&

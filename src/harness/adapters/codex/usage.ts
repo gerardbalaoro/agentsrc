@@ -85,6 +85,7 @@ export function parseCodex(raw: unknown, inventory: unknown, now: number): Snaps
 
       return [
         {
+          id: `${label}:${index}`,
           label: `${label} ${period}`,
           usedPercent: window.used_percent,
           resetsAt: reset === null ? null : timestamp(reset),
@@ -105,6 +106,10 @@ export function parseCodex(raw: unknown, inventory: unknown, now: number): Snaps
         id: credit.id,
         count: 1,
         label: credit.reset_type ?? "Full reset",
+        restores:
+          credit.reset_type === undefined || credit.reset_type === "codex_rate_limits"
+            ? windows.flatMap((window) => (window.id ? [window.id] : []))
+            : [],
         expiresAt,
         expiry: expiryStatus(credit.expires_at),
         canClaim: !expiresAt || Date.parse(expiresAt) > now,

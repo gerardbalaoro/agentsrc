@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import { defineCommand } from "@crustjs/core";
 import { ZodError } from "zod";
 
@@ -7,94 +5,60 @@ import { JsonFlagDef } from "#commands/flags.ts";
 import { UsageError } from "#errors.ts";
 import { AllAdapters } from "#harness/registry.ts";
 import { Ui } from "#ui.ts";
-import type { UsageSource } from "#usage/model.ts";
 import { createReport, formatReport, reportTitle } from "#usage/report.ts";
+import { resetUsage } from "#usage/reset.ts";
+
+const HarnessArg = {
+  name: "harness",
+  type: "string",
+  description: "Harness: claude-code, codex, or opencode",
+} as const;
 
 const ResetCommand = defineCommand(
   "reset",
-  { description: "Claim one banked provider reset" },
+  { description: "Choose and claim a banked reset" },
   (command) =>
     command
+      .args(HarnessArg)
       .flags({
         ...JsonFlagDef,
-        provider: {
-          type: "string",
-          required: true,
-          description: "Provider with banked resets: codex or claude",
-        },
+        next: { type: "boolean", description: "Choose the reset that expires first" },
+        yes: { type: "boolean", short: "y", description: "Claim without confirmation" },
         credit: {
           type: "string",
-          required: true,
-          description: "Credit or grant ID shown by arc usage --json",
+          description: "Explicit credit ID, including when retrying a claim",
         },
         "request-id": {
           type: "string",
-          description: "Reuse the same ID and credit when retrying an uncertain claim",
+          description: "Original request ID for retrying an uncertain claim",
         },
       })
-      .action(async ({ flags }) => {
-        const source = selectSource(flags.provider);
-        const { provider } = source;
+      .action(async ({ args, flags }) => {
+        const selected = await chooseResetAccount(args.harness);
 
-        if (!flags.credit.trim()) {
-          throw new UsageError("--credit must not be empty.");
+        if (!selected) {
+          return;
         }
 
-        const requestId = flags["request-id"] ?? randomUUID();
+        const result = await resetUsage(selected.provider, selected.account, {
+          next: flags.next ?? false,
+          yes: flags.yes ?? false,
+          credit: flags.credit,
+          requestId: flags["request-id"],
+        });
 
-        if (!/^[A-Za-z0-9_-]{1,64}$/u.test(requestId)) {
-          throw new UsageError(
-            "--request-id must contain 1–64 letters, numbers, underscores, or hyphens."
-          );
+        if (!result) {
+          return;
         }
-
-        const account = await source.connect();
-
-        if (!account) {
-          throw new Error(`Sign in with the ${provider} CLI first.`);
-        }
-
-        const { claimReset } = account;
-
-        if (!claimReset) {
-          throw new UsageError(`${provider} does not support claiming banked resets.`);
-        }
-
-        // A replay must send the same pair even when the first request removed the credit from inventory.
-        if (!flags["request-id"]) {
-          const snapshot = await account.read();
-
-          if (
-            !snapshot.resets.credits.some((credit) => credit.id === flags.credit && credit.canClaim)
-          ) {
-            throw new Error(
-              "This reset is unavailable, expired, or no longer claimable. Run arc usage again."
-            );
-          }
-        }
-
-        Ui.info(`Reset request: ${requestId}`);
-        let claim: Awaited<ReturnType<typeof claimReset>>;
-
-        try {
-          claim = await claimReset({ creditId: flags.credit, requestId });
-        } catch {
-          throw new Error(
-            `Reset result unknown. Retry: arc usage reset --provider ${provider} --credit ${flags.credit} --request-id ${requestId}`
-          );
-        }
-
-        const { outcome, success } = claim;
-        const result = { provider, creditId: flags.credit, requestId, outcome, success };
 
         if (flags.json) {
           Ui.json(result);
-        } else if (success) {
-          Ui.success(`${provider}: reset claimed.`);
+        } else if (result.success) {
+          Ui.success(`${selected.provider}: reset claimed.`);
         }
 
-        if (!success) {
-          throw new Error(`Reset was not confirmed: ${outcome}.`);
+        if (!result.success) {
+          throw new Error(`Reset was not confirmed: ${result.outcome}.`);
         }
       })
 );
@@ -104,21 +68,13 @@ export const UsageCommand = defineCommand(
   { description: "Show provider limits, reset timing, and banked resets" },
   (command) =>
     command
-      .flags({
-        ...JsonFlagDef,
-        provider: {
-          type: "string",
-          multiple: true,
-          short: "p",
-          description:
-            "codex, claude, or opencode; repeat to select both (default: detected logins)",
-        },
-      })
+      .args(HarnessArg)
+      .flags(JsonFlagDef)
       .add(ResetCommand)
-      .action(async ({ flags }) => {
-        const selected =
-          flags.provider?.map(selectSource) ??
-          AllAdapters.flatMap((adapter) => (adapter.usage ? [adapter.usage] : []));
+      .action(async ({ args, flags }) => {
+        const selected = args.harness
+          ? [selectHarness(args.harness)]
+          : AllAdapters.filter((adapter) => adapter.detect() && adapter.usage);
 
         const progress =
           !flags.json && process.stderr.isTTY && !process.env.CI ? Ui.spinner() : undefined;
@@ -126,7 +82,13 @@ export const UsageCommand = defineCommand(
         progress?.start("Checking usage");
 
         const results = await Promise.all(
-          [...new Set(selected)].map(async (source) => {
+          [...new Set(selected)].map(async (adapter) => {
+            const source = adapter.usage;
+
+            if (!source) {
+              throw new UsageError(`Usage is unavailable for ${adapter.id}.`);
+            }
+
             const { provider } = source;
 
             try {
@@ -136,7 +98,7 @@ export const UsageCommand = defineCommand(
                 return {
                   provider,
                   report: null,
-                  error: flags.provider ? `Sign in with the ${provider} CLI first.` : null,
+                  error: args.harness ? `Sign in with the ${provider} CLI first.` : null,
                 };
               }
 
@@ -180,20 +142,73 @@ export const UsageCommand = defineCommand(
         if (reports.length === 0 || errors.length > 0) {
           throw new Error(
             reports.length === 0 && errors.length === 0
-              ? "No provider logins found. Sign in with Codex or Claude Code first."
+              ? "No detected harness logins found. Sign in with a supported harness first."
               : "Could not retrieve all requested provider usage."
           );
         }
       })
 );
 
-function selectSource(value: string): UsageSource {
+function selectHarness(value: string) {
   const adapter = AllAdapters.find((item) => item.id === value || item.usage?.provider === value);
 
   if (!adapter?.usage) {
-    const names = AllAdapters.flatMap((item) => (item.usage ? [item.usage.provider] : []));
-    throw new UsageError(`Usage is unavailable for \`${value}\`. Choose ${names.join(" or ")}.`);
+    throw new UsageError(
+      `Usage is unavailable for \`${value}\`. Choose ${AllAdapters.map((item) => item.id).join(", ")}.`
+    );
   }
 
-  return adapter.usage;
+  return adapter;
+}
+
+async function chooseResetAccount(harness: string | undefined) {
+  if (harness) {
+    const adapter = selectHarness(harness);
+    const source = adapter.usage;
+
+    if (!source) {
+      throw new UsageError(`Usage is unavailable for ${harness}.`);
+    }
+
+    const account = await source.connect();
+
+    if (!account) {
+      throw new Error(`Sign in with the ${source.provider} CLI first.`);
+    }
+
+    return { provider: source.provider, account };
+  }
+
+  if (!Ui.isInteractive()) {
+    throw new UsageError("Run interactively to choose a harness, or pass a harness name.");
+  }
+
+  const connections = await Promise.all(
+    AllAdapters.filter((adapter) => adapter.detect()).map(async (adapter) => {
+      const source = adapter.usage;
+
+      if (!source) {
+        return null;
+      }
+
+      const account = await source.connect();
+
+      return account?.claimReset
+        ? { harness: adapter.id, provider: source.provider, account }
+        : null;
+    })
+  );
+
+  const accounts = connections.filter((connection) => connection !== null);
+
+  if (accounts.length === 0) {
+    throw new Error("No detected harness logins support reset claims.");
+  }
+
+  const chosen = await Ui.pick(
+    "Choose a harness",
+    accounts.map((item) => ({ value: item.harness, label: item.harness }))
+  );
+
+  return accounts.find((item) => item.harness === chosen) ?? null;
 }

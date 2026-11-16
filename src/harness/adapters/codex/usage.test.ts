@@ -232,3 +232,19 @@ test("malformed inventory does not hide valid limits", () => {
       .windows[0]?.usedPercent
   ).toBe(50);
 });
+
+test("Codex full resets identify both session and weekly limits they restore", () => {
+  const snapshot = parseCodex(
+    {
+      rate_limit: {
+        primary_window: { used_percent: 0, limit_window_seconds: 18_000 },
+        secondary_window: { used_percent: 100, limit_window_seconds: 604_800 },
+      },
+    },
+    { available_count: 1, credits: [{ id: "credit", reset_type: "codex_rate_limits" }] },
+    Now
+  );
+
+  expect(snapshot.windows.map((window) => window.id)).toEqual(["Usage:0", "Usage:1"]);
+  expect(snapshot.resets.credits[0]?.restores).toEqual(["Usage:0", "Usage:1"]);
+});

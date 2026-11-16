@@ -1,14 +1,14 @@
 # Provider Usage
 
 Run `arc usage` to check the Codex, Claude, and OpenCode Go accounts signed in on your machine. No
-agentsrc manifest is required. This command retrieves provider allowances, including usage outside
-agentsrc.
+agentsrc manifest is required. With no harness argument, only detected harnesses are queried. This
+command retrieves provider allowances, including usage outside agentsrc.
 
 ```bash
 arc usage
-arc usage --provider codex --provider claude
-arc usage --provider codex --json
-arc usage --provider opencode
+arc usage codex
+arc usage claude-code --json
+arc usage opencode
 ```
 
 Each provider has a compact card showing its account name or ID, remaining allowance, and reset
@@ -19,10 +19,10 @@ and code-review windows appear when the provider reports them.
 
 ## OpenCode Go
 
-`arc usage --provider opencode` reads OpenCode Go's 5-hour, weekly, and monthly allowances. The
-adapter uses the active Go credential, or the active OpenCode Console OAuth login when no Go
-credential is selected. Other providers connected through OpenCode and Zen pay-as-you-go balances
-are not included.
+`arc usage opencode` reads OpenCode Go's 5-hour, weekly, and monthly allowances. The adapter uses
+the active Go credential, or the active OpenCode Console OAuth login when no Go credential is
+selected. Other providers connected through OpenCode and Zen pay-as-you-go balances are not
+included.
 
 Install an OpenCode v2 build with `opencode auth export` available on your PATH. The adapter
 captures its JSON export in memory to read current SQLite credentials. It does not use legacy
@@ -44,27 +44,54 @@ expiries. It distinguishes an explicit non-expiring credit from an unknown expir
 Claude grants cannot be claimed. Fable grants return Fable's weekly usage; they do not refill the
 entire week.
 
-Find a credit ID with `arc usage --json`, then claim one reset:
+Choose a harness and reset interactively:
 
 ```bash
-arc usage reset --provider codex --credit <id>
-arc usage reset --provider claude --credit <id>
+arc usage reset
+arc usage reset codex
+arc usage reset claude-code
 ```
 
-This command spends a banked reset immediately. It does not purchase credits. A fresh claim checks
-the provider's inventory first. Provider responses distinguish successful resets from cooldowns,
-unavailable credits, and limits that need no reset. Run `arc usage` afterward to check the current
-limits.
+With no harness argument, a Clack prompt lists detected, signed-in harnesses that support reset
+claims. The reset picker lists claimable resets by expiry, earliest first. Credits without a
+reported expiry appear last. Cancelling either picker or declining confirmation spends nothing.
 
-Before submitting, the command prints a request ID to stderr. If the result is uncertain, retry with
-the same provider, credit, request ID, and signed-in account:
+Use `--next` to select the first expiring reset without opening the reset picker:
 
 ```bash
-arc usage reset --provider codex --credit <same-id> --request-id <same-request-id>
+arc usage reset codex --next
+arc usage reset codex --next --yes
 ```
 
-A retry sends the same claim directly, even if the first attempt removed the credit from inventory.
-Never change the request ID to retry an uncertain claim. There are no automatic claim retries.
+Every claim requires confirmation unless you pass `--yes`. Scripts must provide a harness and use
+`--next --yes`. Warnings remain visible with `--yes`.
+
+A reset's coverage determines its warnings:
+
+- If any limit it restores is exhausted, it can be useful even when another covered limit is full.
+- If all covered limits have unused allowance, warn unless the credit expires in under 12 hours.
+- If an exhausted limit is outside its coverage, warn that it may still block usage after the reset.
+- If coverage or expiry is unknown, report that uncertainty.
+
+For example, a full reset can help when weekly usage is exhausted but session usage is empty. A
+session-only reset cannot refill that weekly allowance. Fable credits do not reset the entire weekly
+allowance.
+
+Claims spend existing credits immediately; they do not purchase credits. Fresh claims check
+inventory before selection. The provider determines the final outcome. Run `arc usage` afterward to
+check current limits.
+
+Before submitting, the command prints a request ID to stderr. If the result is uncertain, reuse the
+same harness, credit ID, request ID, and signed-in account:
+
+```bash
+arc usage reset codex --credit <same-id> --request-id <same-request-id>
+```
+
+`--credit` and `--request-id` support explicit selection and recovery. A retry sends the original
+claim directly, even if the first attempt removed the credit from inventory. It still requires
+confirmation unless `--yes` is passed. Never change the request ID to retry an uncertain claim.
+There are no automatic claim retries.
 
 ## Authentication and Availability
 

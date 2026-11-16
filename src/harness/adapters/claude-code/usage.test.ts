@@ -193,3 +193,32 @@ test("Claude grants remain visible when an eligible response has a null ineligib
   expect(snapshot.resets.credits[0]?.id).toBe("full-reset");
   expect(snapshot.resets.credits[0]?.canClaim).toBe(true);
 });
+
+test("Claude reset coverage preserves exact provider limit IDs for full and Fable grants", () => {
+  const snapshot = parseClaude(
+    {
+      five_hour: { utilization: 0 },
+      seven_day: { utilization: 100 },
+      cedar_ember: {
+        eligible: true,
+        grants: [
+          { id: "full", resets_left: 1, usable_now: true, clears: ["five_hour", "seven_day"] },
+          {
+            id: "fable",
+            resets_left: 1,
+            usable_now: true,
+            gives_back_weekly: true,
+            clears: ["five_hour", "seven_day_overage_included"],
+          },
+        ],
+      },
+    },
+    Now
+  );
+
+  expect(snapshot.windows.map((window) => window.id)).toEqual(["five_hour", "seven_day"]);
+  expect(snapshot.resets.credits.map((credit) => credit.restores)).toEqual([
+    ["five_hour", "seven_day"],
+    ["five_hour", "seven_day_overage_included"],
+  ]);
+});

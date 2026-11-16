@@ -1,4 +1,5 @@
 export interface Window {
+  id?: string;
   label: string;
   usedPercent: number;
   resetsAt: string | null;
@@ -11,6 +12,7 @@ export interface Credit {
   expiresAt: string | null;
   expiry: "dated" | "never" | "unknown";
   canClaim: boolean;
+  restores?: string[];
 }
 
 export interface Snapshot {

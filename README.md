@@ -50,24 +50,27 @@ entries.
 
 ## Provider Usage
 
-Check Codex, Claude, and OpenCode Go subscription limits with your existing CLI logins, from any
-directory:
+Check limits for detected harnesses, or choose one:
 
 ```bash
 arc usage
-arc usage --provider codex
-arc usage --provider claude --json
-arc usage --provider opencode
+arc usage codex
+arc usage claude-code --json
+arc usage opencode
 ```
 
-See remaining allowance, limit resets, and banked resets with their expiry dates. To claim a banked
-reset, find its ID with `arc usage --json`:
+See remaining allowance, account details, reset timing, and available banked resets. Choose a reset
+interactively, or use the one that expires first:
 
 ```bash
-arc usage reset --provider codex --credit <id>
+arc usage reset
+arc usage reset codex
+arc usage reset codex --next
+arc usage reset codex --next --yes
 ```
 
-See [provider usage](docs/provider-usage.md) for authentication and claim retries.
+Claims require confirmation unless you pass `--yes`. See [provider usage](docs/provider-usage.md)
+for reset warnings, authentication, and claim retries.
 
 ## Configuration
 
