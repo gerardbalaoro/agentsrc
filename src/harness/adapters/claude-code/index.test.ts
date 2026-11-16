@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { lstat, readFile, readlink } from "node:fs/promises";
 import path from "node:path";
 
-import { ClaudeCode } from "#harness/adapters/claude-code.ts";
+import { ClaudeCode } from "#harness/adapters/claude-code/index.ts";
 import { createServer } from "#mcp/entry.ts";
 import type { Scope } from "#scope.ts";
 import { createTempDir, readFileText, writeFiles } from "#test/support/temp.ts";

@@ -1,3 +1,7 @@
+import { styleText } from "node:util";
+import type { InspectColor } from "node:util";
+
+import { log, note, spinner } from "@clack/prompts";
 import { confirm, multiselect } from "@crustjs/prompts";
 
 import type { ConfigValue } from "#util/config-value.ts";
@@ -7,6 +11,33 @@ export const Ui = {
   /** Asks a yes or no question. Call it only when `isInteractive` is true. */
   async confirm(message: string) {
     return await confirm({ default: false, message });
+  },
+
+  style(format: InspectColor | InspectColor[], text: string, enabled = true) {
+    const forced = process.env.FORCE_COLOR;
+
+    const supported =
+      forced === undefined
+        ? Boolean(process.stdout.isTTY) && process.env.TERM !== "dumb"
+        : forced !== "0";
+
+    if (!enabled || process.env.NO_COLOR !== undefined || !supported) {
+      return text;
+    }
+
+    return styleText(format, text, { validateStream: false });
+  },
+
+  success(message: string) {
+    log.success(message, { output: process.stdout, withGuide: false });
+  },
+
+  note(message: string, title: string) {
+    note(message, title, { output: process.stdout, withGuide: false });
+  },
+
+  spinner() {
+    return spinner({ output: process.stderr, withGuide: false });
   },
 
   info(message: string) {

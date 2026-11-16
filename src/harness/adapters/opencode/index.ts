@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import { z } from "zod";
 
 import { OperationError } from "#errors.ts";
+import { createOpenCodeUsage } from "#harness/adapters/opencode/usage.ts";
 import { literal, parseImported } from "#harness/import-value.ts";
 import type { Adapter, HarnessServer } from "#harness/registry.ts";
 import { UniversalSkills } from "#harness/universal.ts";
@@ -78,6 +79,8 @@ export const OpenCode: Adapter = {
 
     render,
   },
+
+  usage: createOpenCodeUsage(),
 
   skills: UniversalSkills,
 };

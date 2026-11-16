@@ -6,6 +6,7 @@
       "name": "agentbase",
       "devDependencies": {
         "@changesets/cli": "^3.0.3",
+        "@clack/prompts": "^1.9.0",
         "@crustjs/core": "^0.6.0",
         "@crustjs/extensions": "^0.6.0",
         "@crustjs/prompts": "^0.3.0",

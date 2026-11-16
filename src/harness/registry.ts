@@ -1,11 +1,12 @@
-import { ClaudeCode } from "#harness/adapters/claude-code.ts";
-import { Codex } from "#harness/adapters/codex.ts";
-import { OpenCode } from "#harness/adapters/opencode.ts";
+import { ClaudeCode } from "#harness/adapters/claude-code/index.ts";
+import { Codex } from "#harness/adapters/codex/index.ts";
+import { OpenCode } from "#harness/adapters/opencode/index.ts";
 import { HarnessIds } from "#harness/ids.ts";
 import type { HarnessId } from "#harness/ids.ts";
 import type { McpEntry } from "#manifest/schema.ts";
 import type { McpServer } from "#mcp/entry.ts";
 import type { Scope } from "#scope.ts";
+import type { UsageSource } from "#usage/model.ts";
 import type { ConfigTable, ConfigValue } from "#util/config-value.ts";
 
 /** A skill as a harness sees it on disk. */
@@ -38,6 +39,8 @@ export interface HarnessServer {
  */
 export interface Adapter {
   id: HarnessId;
+  /** Absent when subscription usage is unsupported. Each connection keeps one login for reads and claims. */
+  usage?: UsageSource;
   /** True when the harness is installed on this machine. */
   detect: (scope?: Scope) => boolean;
   skills: {

@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import { z } from "zod";
 
 import { OperationError } from "#errors.ts";
+import { createClaudeUsage } from "#harness/adapters/claude-code/usage.ts";
 import { parseImported } from "#harness/import-value.ts";
 import type { Adapter, HarnessServer } from "#harness/registry.ts";
 import { createLinkedSkills } from "#harness/skill-dirs.ts";
@@ -90,6 +91,8 @@ export const ClaudeCode: Adapter = {
 
     render,
   },
+
+  usage: createClaudeUsage(configDir, userFile),
 
   skills: createLinkedSkills((scope) =>
     scope.kind === "global"

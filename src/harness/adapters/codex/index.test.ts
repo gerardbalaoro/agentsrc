@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { Codex } from "#harness/adapters/codex.ts";
+import { Codex } from "#harness/adapters/codex/index.ts";
 import { createServer } from "#mcp/entry.ts";
 import type { Scope } from "#scope.ts";
 import { createTempDir, readFileText, writeFiles } from "#test/support/temp.ts";
