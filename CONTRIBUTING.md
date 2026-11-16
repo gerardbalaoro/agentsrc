@@ -26,7 +26,11 @@ Add a changeset for user-visible changes:
 bun run changeset
 ```
 
-Pushes to `main` run checks and compile standalone binaries before Changesets publishes anything.
+Pushes to `main` reuse successful PR checks and standalone binaries when the tested Git tree matches
+exactly. Reuse requires a branch in this repository and all six binary artifacts, retained for seven
+days. Missing, expired, or invalid artifacts trigger fresh checks and native builds. Manually
+dispatch the Release workflow to bypass reuse and run fresh checks.
+
 Pending changesets produce a version pull request. Merge it to publish the npm package, create a
 `v<version>` GitHub release, and attach archives plus SHA-256 checksums. Release jobs use the same
 commit and version for the npm package and executables.
