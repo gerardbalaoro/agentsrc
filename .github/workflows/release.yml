@@ -8,10 +8,13 @@ concurrency:
   cancel-in-progress: false
 permissions:
   contents: read
+  actions: read
 jobs:
   check:
-    uses: ./.github/workflows/ci.yml
+    name: Check
+    uses: ./.github/workflows/check.yml
   publish:
+    name: Publish
     if: github.ref == 'refs/heads/main'
     needs: check
     runs-on: ubuntu-latest

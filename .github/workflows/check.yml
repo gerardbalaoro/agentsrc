@@ -1,0 +1,137 @@
+name: Check
+on:
+  pull_request:
+  workflow_call:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  reuse:
+    name: Restore artifacts
+    runs-on: ubuntu-latest
+    outputs:
+      reused: ${{ steps.restore.outputs.reused == 'true' && steps.upload.outcome == 'success' }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Restore artifacts from a verified PR run
+        id: restore
+        continue-on-error: true
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const { reuseCi } = await import(`${process.env.GITHUB_WORKSPACE}/.github/scripts/ci-artifacts.js`);
+            await reuseCi({ github, context, core });
+      - name: Make the verified binaries available to this release
+        id: upload
+        if: steps.restore.outputs.reused == 'true'
+        continue-on-error: true
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: binary-reused
+          overwrite: true
+          path: ${{ steps.restore.outputs.directory }}/*
+          retention-days: 7
+          if-no-files-found: error
+      - name: Record reuse decision
+        if: always()
+        env:
+          REUSED: ${{ steps.restore.outputs.reused == 'true' && steps.upload.outcome == 'success' }}
+          SOURCE_RUN: ${{ steps.restore.outputs.run-id }}
+        run: |
+          if [ "$REUSED" = true ]; then
+            echo "Reused checks and all six binaries from PR run $SOURCE_RUN (identical Git tree)." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Running full CI. Manual Release runs always bypass artifact reuse." >> "$GITHUB_STEP_SUMMARY"
+          fi
+  check:
+    name: Check
+    needs: reuse
+    if: needs.reuse.outputs.reused != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+      - uses: jdx/mise-action@v5.2.8
+        with:
+          install_args: --locked bun
+      - run: bun install --frozen-lockfile
+      - run: bun run format:check
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun test --timeout 15000
+      - run: bun run build
+      - run: npm pack --ignore-scripts
+      - name: Record the tested merge commit
+        if: github.event_name == 'pull_request'
+        id: snapshot
+        run: |
+          commit=$(git rev-parse HEAD)
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "$commit" > "$RUNNER_TEMP/ci-snapshot"
+      - uses: actions/upload-artifact@v7.0.2
+        if: github.event_name == 'pull_request'
+        with:
+          name: ci-snapshot-${{ steps.snapshot.outputs.commit }}
+          overwrite: true
+          path: ${{ runner.temp }}/ci-snapshot
+          retention-days: 7
+          if-no-files-found: error
+  native:
+    name: Test ${{ matrix.platform }}
+    needs: check
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x64
+            runner: ubuntu-24.04
+            extension: ""
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            extension: ""
+          - platform: macos-x64
+            runner: macos-15-intel
+            extension: ""
+          - platform: macos-arm64
+            runner: macos-15
+            extension: ""
+          - platform: windows-x64
+            runner: windows-2025
+            extension: .exe
+          - platform: windows-arm64
+            runner: windows-11-arm
+            extension: .exe
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+      - uses: jdx/mise-action@v5.2.8
+        with:
+          install_args: --locked bun
+      - run: bun --revision
+      - run: bun install --frozen-lockfile
+      - run: bun run compile ${{ matrix.platform }}
+      - name: Extract the executable from the release archive
+        run: |
+          version=$(node -p "require('./package.json').version")
+          tar -xzf "release/agentsrc-v${version}-${{ matrix.platform }}.tar.gz" -C release
+      - name: Test the release executable
+        run: bun test test/e2e --timeout 30000
+        env:
+          ARC_TEST_EXECUTABLE: release/arc${{ matrix.extension }}
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: binary-${{ matrix.platform }}
+          overwrite: true
+          retention-days: 7
+          path: |
+            release/*.tar.gz
+            release/*.sha256
+          if-no-files-found: error
