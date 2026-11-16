@@ -1,17 +1,18 @@
 # agentsrc
 
-Manage agent skills and MCP servers for Claude Code, Codex, and OpenCode v2 from one configuration
-file. Share your project's setup with your team, or keep a personal setup across projects.
+Keep your agent skills and MCP servers in one configuration file.
 
-- Add skills and MCP servers once and use them across your coding agents.
-- Import the skills and servers you already use.
-- Reuse shared configuration with local files or URLs.
-- Use skills from the [skills.sh ecosystem](https://github.com/vercel-labs/skills) with a compatible
-  lock file.
+## Supported Agents
+
+| Agent       | Skills | MCP Servers | Usage |
+| ----------- | ------ | ----------- | ----- |
+| Claude Code | ✅     | ✅          | ✅    |
+| Codex       | ✅     | ✅          | ✅    |
+| OpenCode v2 | ✅     | ✅          | ✅    |
 
 ## Installation
 
-Install with npm (Node 20.12 or later):
+With npm (Node.js 20.12 or later):
 
 ```bash
 npm install -g agentsrc
@@ -23,12 +24,11 @@ Or install a standalone binary with [mise](https://mise.jdx.dev):
 mise use -g github:gerardbalaoro/agentsrc
 ```
 
-The examples use `arc`. Mise installations also provide `agents` and `agentsrc`; npm installations
-provide `arc` and `agentsrc`.
+Both provide the `arc` command.
 
-## Getting Started
+## Quick Start
 
-Initialize your project, then add a skill and an MCP server:
+Run these commands from your project directory and follow the prompts:
 
 ```bash
 arc init
@@ -36,66 +36,40 @@ arc skills add vercel-labs/agent-skills
 arc mcp add npm:@upstash/context7-mcp
 ```
 
-`init` detects your coding agents and offers to import existing skills and servers. The `add`
-commands save your choices in `.agents/agents.toml` and install them for your configured agents.
-
-For a project that already has a manifest, install its skills and servers with:
-
-```bash
-arc sync
-```
-
-If you imported existing entries with `init`, use `arc sync --force` to let agentsrc manage those
-entries.
-
-## Provider Usage
-
-Check limits for detected harnesses, or choose one:
-
-```bash
-arc usage
-arc usage codex
-arc usage claude-code --json
-arc usage opencode
-```
-
-See remaining allowance, account details, reset timing, and available banked resets. Choose a reset
-interactively, or use the one that expires first:
-
-```bash
-arc usage reset
-arc usage reset codex
-arc usage reset codex --next
-arc usage reset codex --next --yes
-```
-
-Claims require confirmation unless you pass `--yes`. See [provider usage](docs/provider-usage.md)
-for reset warnings, authentication, and claim retries.
+The selected skills and Context7 MCP server are now installed for your coding agents.
 
 ## Configuration
 
-The manifest at `.agents/agents.toml` describes your project's setup:
+The configuration file lives in `.agents/agents.toml`, and typically looks like:
 
 ```toml
 agents = ["claude-code", "codex", "opencode"]
 
 [skills]
-frontend-design = "vercel-labs/agent-skills"
+web-design-guidelines = "vercel-labs/agent-skills"
 
 [mcp.context7]
 package = "npm:@upstash/context7-mcp"
 ```
 
-Use `arc init -g` for personal configuration at `~/.agents/agents.toml`. Add `-g` to subsequent
-commands to manage that setup.
+Use `extends` to share configuration from local files or URLs. See the
+[configuration overview](docs/configuration.md) for scope, agent selection, and inheritance.
 
-To reuse a team configuration, add `extends` at the top of your manifest:
+### Global Scope
 
-```toml
-extends = ["https://example.com/team/agents.toml"]
+Use the `-g` flag to manage `~/.agents/agents.toml` and install skills and servers for use across
+projects:
+
+```bash
+arc init -g
+arc skills add vercel-labs/agent-skills -g
+arc sync -g
 ```
 
-## Everyday Commands
+Project and global configuration are managed separately. Project configuration does not
+automatically inherit global configuration.
+
+## Common Commands
 
 | Task   | Skills                         | MCP Servers                    |
 | ------ | ------------------------------ | ------------------------------ |
@@ -104,7 +78,27 @@ extends = ["https://example.com/team/agents.toml"]
 | Update | `arc skills update [names...]` | `arc mcp update [names...]`    |
 | Remove | `arc skills remove <names...>` | `arc mcp remove <names...>`    |
 
-See the [usage guide](docs/usage.md) for import options, configuration examples, and command
-behavior. Run `arc --help` to explore the CLI.
+You can also check subscription allowances for your signed-in accounts:
 
-For development and release instructions, see [Contributing](CONTRIBUTING.md).
+```bash
+arc usage
+```
+
+See [account limits](docs/account-limits.md) for account support and banked resets.
+
+## Documentation
+
+- [Configuration](docs/configuration.md): manifest structure, scope, agent selection, sharing, and
+  CI.
+- [Skills](docs/skills.md): imports, sources, configuration, commands, and Vercel Skills CLI
+  compatibility.
+- [MCP servers](docs/mcp.md): imports, configuration, authentication, commands, and agent
+  compatibility.
+- [Account limits](docs/account-limits.md): allowances, authentication, and reset claims.
+- [Contributing](CONTRIBUTING.md): development and releases.
+
+Run `arc --help` or `arc <command> --help` for command options.
+
+## License
+
+[AGPL-3.0](LICENSE).

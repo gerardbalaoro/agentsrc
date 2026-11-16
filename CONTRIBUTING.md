@@ -2,23 +2,35 @@
 
 ## Development
 
-[mise](https://mise.jdx.dev) installs the pinned Bun canary. Run `mise install --locked bun` before
-development. `mise.lock` records checksums for all six platforms; the dated npm artifacts keep the
-compiler available after GitHub's canary download changes.
+Install the pinned Bun canary with [mise](https://mise.jdx.dev):
+
+```bash
+mise install --locked bun
+```
+
+Install dependencies, then run the CLI locally:
 
 ```bash
 bun install
 bun run dev --help
+```
+
+Before submitting a change, run:
+
+```bash
+bun run format:check
 bun test
 bun run lint
 bun run typecheck
 bun run build
 ```
 
-`bun install` applies the patch in `patches/` to `@decimalturn/toml-patch`. `bun run build` bundles
-every dependency into `dist/`, so the published package has no runtime dependencies.
+`bun run build` writes the npm CLI to `dist/` and bundles its dependencies. For user documentation,
+see the [README](README.md), [Skills](docs/skills.md), and [MCP Servers](docs/mcp.md) guides.
 
 ## Releases
+
+### Changesets
 
 Add a changeset for user-visible changes:
 
@@ -34,6 +46,8 @@ dispatch the Release workflow to bypass reuse and run fresh checks.
 Pending changesets produce a version pull request. Merge it to publish the npm package, create a
 `v<version>` GitHub release, and attach archives plus SHA-256 checksums. Release jobs use the same
 commit and version for the npm package and executables.
+
+### Standalone Binaries
 
 The archives contain `arc`, with `agents` and `agentsrc` hard links, for Linux, macOS and Windows on
 x64 and ARM64. Build one platform locally with:
