@@ -5,6 +5,7 @@ import path from "node:path";
 import { z } from "zod";
 
 import { OperationError } from "#errors.ts";
+import { createCodexUsage } from "#harness/adapters/codex/usage.ts";
 import { literal, parseImported } from "#harness/import-value.ts";
 import type { Adapter, HarnessServer } from "#harness/registry.ts";
 import { UniversalSkills } from "#harness/universal.ts";
@@ -64,6 +65,8 @@ export const Codex: Adapter = {
 
     render,
   },
+
+  usage: createCodexUsage(configDir),
 
   skills: UniversalSkills,
 };

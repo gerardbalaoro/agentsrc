@@ -5,6 +5,7 @@ import { InitCommand } from "#commands/init.ts";
 import { McpCommand } from "#commands/mcp/index.ts";
 import { SkillsCommand } from "#commands/skills/index.ts";
 import { SyncCommand } from "#commands/sync.ts";
+import { UsageCommand } from "#commands/usage.ts";
 import { UsageError } from "#errors.ts";
 
 import packageJson from "../package.json" with { type: "json" };
@@ -32,7 +33,7 @@ export async function runCli(argv: string[]) {
     version: packageJson.version,
   })
     .extend(exitCode, help(), version(), didYouMean())
-    .add(InitCommand, SyncCommand, SkillsCommand, McpCommand);
+    .add(InitCommand, SyncCommand, SkillsCommand, McpCommand, UsageCommand);
 
   const code = await app.execute({ argv });
 

@@ -11,7 +11,7 @@ file. Share your project's setup with your team, or keep a personal setup across
 
 ## Installation
 
-Install with npm (Node 20 or later):
+Install with npm (Node 20.12 or later):
 
 ```bash
 npm install -g agentsrc
@@ -47,6 +47,30 @@ arc sync
 
 If you imported existing entries with `init`, use `arc sync --force` to let agentsrc manage those
 entries.
+
+## Provider Usage
+
+Check limits for detected harnesses, or choose one:
+
+```bash
+arc usage
+arc usage codex
+arc usage claude-code --json
+arc usage opencode
+```
+
+See remaining allowance, account details, reset timing, and available banked resets. Choose a reset
+interactively, or use the one that expires first:
+
+```bash
+arc usage reset
+arc usage reset codex
+arc usage reset codex --next
+arc usage reset codex --next --yes
+```
+
+Claims require confirmation unless you pass `--yes`. See [provider usage](docs/provider-usage.md)
+for reset warnings, authentication, and claim retries.
 
 ## Configuration
 

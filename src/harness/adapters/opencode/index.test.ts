@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { OpenCode } from "#harness/adapters/opencode.ts";
+import { OpenCode } from "#harness/adapters/opencode/index.ts";
 import { createServer } from "#mcp/entry.ts";
 import type { Scope } from "#scope.ts";
 import { createTempDir, readFileText, writeFiles } from "#test/support/temp.ts";
