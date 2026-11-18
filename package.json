@@ -1,6 +1,6 @@
 {
   "name": "agentsrc",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "agentsrc - sync configuration across AI agent harnesses",
   "license": "AGPL-3.0",
   "repository": {
