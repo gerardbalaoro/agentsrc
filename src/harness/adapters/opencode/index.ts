@@ -47,6 +47,7 @@ export const OpenCode: Adapter = {
   id: "opencode",
 
   mcp: {
+    location: configFile,
     import: importServer,
     async add(scope, server) {
       await requireSupportedVersion();

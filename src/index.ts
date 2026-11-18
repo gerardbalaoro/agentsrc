@@ -1,4 +1,4 @@
-// Crust uses explicit resource management, which Node 20 does not provide yet.
+// Keep explicit resource management available across supported Node versions.
 import "core-js/actual/async-disposable-stack/index.js";
 import { runCli } from "#cli.ts";
 

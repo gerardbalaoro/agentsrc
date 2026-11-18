@@ -5,6 +5,8 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import { buildCli, createSandbox } from "#test/support/cli.ts";
+import { writeFiles } from "#test/support/temp.ts";
+import { driveTerminal } from "#test/support/terminal.ts";
 
 import packageJson from "../../package.json" with { type: "json" };
 
@@ -114,6 +116,23 @@ test("the packed npm install provides working arc and agentsrc commands and supp
     );
 
     expect(npx.stdout.trim()).toBe(`arc v${packageJson.version}`);
+
+    if (process.platform !== "win32") {
+      await writeFiles(sandbox.project, {
+        ".claude/skills/alpha/SKILL.md": "---\nname: alpha\ndescription: Alpha\n---\nAlpha.",
+        ".mcp.json": '{"mcpServers":{"db":{"command":"db"}}}',
+      });
+
+      const result = await driveTerminal({
+        command: [npxCommand, ...npxPrefix, "--offline", "--yes", `file:${archive}`, "ui"],
+        cwd: sandbox.project,
+        home: sandbox.home,
+        mode: "batch",
+        env,
+      });
+
+      expect(result.terminalRestored).toBe(true);
+    }
   } finally {
     await rm(sandbox.home, { recursive: true, force: true });
   }

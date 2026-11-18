@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { link, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, link, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -63,7 +63,6 @@ try {
           "ffi",
           "native-addons",
           "native-code",
-          "webassembly",
           "shell",
           "webview",
           "serve",
@@ -107,10 +106,19 @@ try {
   // Tar records hard links without another copy of the executable's payload.
   await Promise.all(aliases.map((name) => link(executable, path.join(staging, name))));
 
+  await copyFile(
+    path.join(root, "src/interactive/termcn/LICENSE"),
+    path.join(staging, "termcn-LICENSE.txt")
+  );
+
   const name = `agentsrc-v${packageJson.version}-${platform}.tar.gz`;
   const archive = path.join(output, name);
   // GNU tar treats the colon in an absolute Windows archive path as a remote host separator.
-  await run("tar", ["-czf", name, "-C", staging, `arc${extension}`, ...aliases], { cwd: output });
+  await run(
+    "tar",
+    ["-czf", name, "-C", staging, `arc${extension}`, ...aliases, "termcn-LICENSE.txt"],
+    { cwd: output }
+  );
 
   const checksum = createHash("sha256")
     .update(await readFile(archive))

@@ -33,6 +33,7 @@ export const ClaudeCode: Adapter = {
   id: "claude-code",
 
   mcp: {
+    location: (scope) => (scope.kind === "global" ? userFile() : projectFile(scope)),
     import: importServer,
     async add(scope, server) {
       const config = render(server);

@@ -42,6 +42,7 @@ export async function findSkillDir(dir: string, name: string) {
  */
 export function createLinkedSkills(getDir: (scope: Scope) => string): Adapter["skills"] {
   return {
+    directory: getDir,
     async add(scope, skill) {
       const target = path.join(getDir(scope), skill.name);
       const existing = await findSkillDir(getDir(scope), skill.name);

@@ -27,13 +27,14 @@ export async function discoverImports(scope: Scope) {
 
   const lock = await readSkillsLock(scope);
   const canonical = await listSkillDirs(skillsDir(scope));
-  const skills: ImportCandidate<SkillEntry>[] = [];
+  const skills: (ImportCandidate<SkillEntry> & { directory: string })[] = [];
   const seen = new Set<string>();
 
   for (const skill of canonical) {
     // oxlint-disable-next-line no-await-in-loop
     seen.add(await realpath(skill.dir));
     skills.push({
+      directory: skill.dir,
       id: `shared:${skill.name}`,
       name: skill.name,
       entry: skillEntry(scope, skill.dir, lock.skills[skill.name]),
@@ -57,6 +58,7 @@ export async function discoverImports(scope: Scope) {
 
         seen.add(resolved);
         skills.push({
+          directory: skill.dir,
           id: `${adapter.id}:${skill.name}`,
           name: skill.name,
           entry: { ...skillEntry(scope, skill.dir, lock.skills[skill.name]), agents: [adapter.id] },

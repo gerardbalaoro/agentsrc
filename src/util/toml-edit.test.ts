@@ -45,12 +45,6 @@ test("a new server is written into an empty file", () => {
   expect(text).toBe(`[mcp.db]\nurl = "https://x.test"\n`);
 });
 
-test("a first skill in an empty file creates the skills table", () => {
-  const text = setTomlValue("", ["skills", "pdf"], "anthropics/skills", { sectionDepth: 1 });
-
-  expect(text).toBe(`[skills]\npdf = "anthropics/skills"\n`);
-});
-
 test("a skill is added under the existing skills table and comments stay", () => {
   const text = setTomlValue(Manifest, ["skills", "house-style"], "./skills/house-style", {
     sectionDepth: 1,

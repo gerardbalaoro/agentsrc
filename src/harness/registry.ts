@@ -44,6 +44,7 @@ export interface Adapter {
   /** True when the harness is installed on this machine. */
   detect: (scope?: Scope) => boolean;
   skills: {
+    directory: (scope: Scope) => string;
     list: (scope: Scope) => Promise<HarnessSkill[]>;
     find: (scope: Scope, name: string) => Promise<HarnessSkill | undefined>;
     /** Makes a canonical skill available to the harness. */
@@ -51,6 +52,7 @@ export interface Adapter {
     remove: (scope: Scope, name: string) => Promise<void>;
   };
   mcp: {
+    location: (scope: Scope) => string;
     /** Converts a scoped harness config to a manifest entry without resolving references. */
     import: (server: HarnessServer) => McpEntry;
     /** Check write prerequisites before any action is applied. */
