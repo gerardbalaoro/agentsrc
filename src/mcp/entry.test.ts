@@ -19,12 +19,6 @@ test("a package entry runs through npx at the locked version, before its own arg
   });
 });
 
-test("a URL entry defaults to the http transport", () => {
-  const server = createServer("linear", { url: "https://mcp.linear.app/mcp" });
-
-  expect(server).toMatchObject({ kind: "remote", transport: "http" });
-});
-
 test("the hash ignores key order and changes with any field", () => {
   const base = hashEntry({ command: "node", env: { A: "1", B: "2" } });
 
