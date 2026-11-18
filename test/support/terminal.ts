@@ -8,6 +8,7 @@ interface TerminalOptions {
   home: string;
   mode: "batch" | "scope" | "ctrlc" | "global";
   env?: Record<string, string | undefined>;
+  afterExit?: (terminal: Bun.Terminal) => void;
 }
 
 /** Drives the real CLI in a PTY, including the OS terminal state before and after exit. */
@@ -54,34 +55,8 @@ export async function driveTerminal(options: TerminalOptions) {
     return offset;
   }
 
-  async function terminalState() {
-    const offset = output.length;
-    const query = Bun.spawn(["stty", "-g"], { terminal, env, timeout: 5000 });
-    const exit = await query.exited;
-    assert.equal(exit, 0, "stty could not read the PTY state");
-    // Process exit can arrive before the PTY's final data callback.
-    const previous = child;
-    child = undefined;
-
-    try {
-      await waitFor("\n", offset);
-
-      const state = stripVTControlCharacters(output.slice(offset))
-        .trim()
-        .split("\n")
-        .at(-1)
-        ?.trim();
-
-      assert.ok(state, "stty returned no PTY state");
-
-      return state;
-    } finally {
-      child = previous;
-    }
-  }
-
   try {
-    const before = await terminalState();
+    const before = terminalFlags(terminal);
     child = Bun.spawn(options.command, {
       cwd: options.cwd,
       env,
@@ -131,7 +106,8 @@ export async function driveTerminal(options: TerminalOptions) {
     await waitFor("Skills & MCPs", offset);
     terminal.write(options.mode === "ctrlc" ? "\u0003" : "q");
     const exit = await child.exited;
-    const after = await terminalState();
+    options.afterExit?.(terminal);
+    const after = terminalFlags(terminal);
     assertTerminalColors(output, options.env?.NO_COLOR === undefined);
 
     const result = {
@@ -157,6 +133,21 @@ export async function driveTerminal(options: TerminalOptions) {
 
     terminal.close();
   }
+}
+
+function terminalFlags(terminal: Bun.Terminal) {
+  assert.equal(terminal.closed, false, "PTY closed before its flags could be checked");
+
+  const flags = [
+    terminal.inputFlags,
+    terminal.outputFlags,
+    terminal.controlFlags,
+    terminal.localFlags,
+  ];
+
+  assert.notEqual(terminal.controlFlags, 0, "Could not read PTY flags");
+
+  return flags.join(":");
 }
 
 function terminalEnvironment(options: TerminalOptions) {

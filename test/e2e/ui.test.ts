@@ -81,22 +81,27 @@ test.skipIf(process.platform === "win32")("NO_COLOR keeps the TUI monochrome", a
 });
 
 test.skipIf(process.platform === "win32")(
-  "the PTY driver rejects a process that leaves echo disabled",
+  "the PTY driver rejects a terminal left in raw mode",
   async () => {
     const sandbox = await createSandbox();
     await writeFiles(sandbox.project, {
       ".claude/skills/alpha/SKILL.md": "---\nname: alpha\ndescription: Alpha\n---\nAlpha.",
     });
 
-    const cli = process.env.ARC_TEST_EXECUTABLE
+    const command = process.env.ARC_TEST_EXECUTABLE
       ? [path.resolve(process.env.ARC_TEST_EXECUTABLE), "ui"]
       : ["node", Entry, "ui"];
 
-    // Run the real CLI, then deliberately corrupt the same PTY after its own cleanup.
-    const command = ["sh", "-c", '"$@"; result=$?; stty -echo; exit "$result"', "sh", ...cli];
-
     await expect(
-      driveTerminal({ command, cwd: sandbox.project, home: sandbox.home, mode: "ctrlc" })
+      driveTerminal({
+        command,
+        cwd: sandbox.project,
+        home: sandbox.home,
+        mode: "ctrlc",
+        afterExit(terminal) {
+          terminal.setRawMode(true);
+        },
+      })
     ).rejects.toThrow("PTY state changed");
   }
 );
