@@ -7,6 +7,7 @@ import { skillsDir } from "#scope.ts";
  * already where the harness looks, so there is nothing to add or remove.
  */
 export const UniversalSkills: Adapter["skills"] = {
+  directory: skillsDir,
   async add() {
     // Nothing to do: the harness reads the canonical copy.
   },

@@ -32,6 +32,7 @@ export const Codex: Adapter = {
   id: "codex",
 
   mcp: {
+    location: configFile,
     import: importServer,
     async add(scope, server) {
       const file = configFile(scope);

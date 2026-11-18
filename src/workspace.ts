@@ -33,13 +33,19 @@ export interface Workspace {
   /** SHA-256 of every remote manifest that this run read, by URL. */
   remoteHashes: Record<string, string>;
   flags: CommonFlags;
+  /** Remote pin changes awaiting approval in the interactive preview. */
+  remoteChanges?: string[];
 }
 
 /**
  * Reads the manifest, everything it extends, and the lock. A remote manifest whose content differs
  * from the lock needs the user's approval, because it can declare commands that harnesses run.
  */
-export async function loadWorkspace(flags: CommonFlags, cwd = process.cwd()): Promise<Workspace> {
+export async function loadWorkspace(
+  flags: CommonFlags,
+  cwd = process.cwd(),
+  options: { reviewRemoteChanges?: boolean } = {}
+): Promise<Workspace> {
   const scope = resolveScope({ cwd, global: flags.global });
   const manifestFile = manifestPath(scope);
   const existing = await readAgentsLock(scope);
@@ -70,7 +76,7 @@ export async function loadWorkspace(flags: CommonFlags, cwd = process.cwd()): Pr
     return hash !== undefined && hash !== lockedHashes[url];
   });
 
-  if (changed.length > 0) {
+  if (changed.length > 0 && !options.reviewRemoteChanges) {
     const locked = await resolveLockedManifest(manifestFile, lockedHashes);
     await approveRemoteChange(changed, describeChange(locked, manifest), flags);
   }
@@ -81,6 +87,9 @@ export async function loadWorkspace(flags: CommonFlags, cwd = process.cwd()): Pr
     lock,
     manifest,
     manifestFile,
+    remoteChanges: options.reviewRemoteChanges
+      ? [...remoteUrls].filter((url) => lockedHashes[url] !== current.remoteHashes[url])
+      : [],
     remoteHashes: current.remoteHashes,
     scope,
   };

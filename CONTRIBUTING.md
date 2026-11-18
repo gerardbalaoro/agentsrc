@@ -25,8 +25,12 @@ bun run typecheck
 bun run build
 ```
 
-`bun run build` writes the npm CLI to `dist/` and bundles its dependencies. For user documentation,
-see the [README](README.md), [Skills](docs/skills.md), and [MCP Servers](docs/mcp.md) guides.
+Run `bun run dev ui` to work on the interactive interface.
+
+`bun install` applies the patch in `patches/` to `@decimalturn/toml-patch`. `bun run build` writes
+the npm CLI to `dist/` and bundles its dependencies, so the published package has no runtime
+dependencies. For user documentation, see the [README](README.md), [Skills](docs/skills.md),
+[MCP Servers](docs/mcp.md), and [Interactive Mode](docs/interactive.md) guides.
 
 ## Releases
 
@@ -57,9 +61,9 @@ bun run compile linux-x64
 ```
 
 Compilation uses Bun's experimental AoT and runtime trimming. Build on the target OS and CPU;
-cross-compilation is rejected. CI builds each of the six targets on a native runner, extracts its
-archive, and runs the end-to-end suite against that executable. Publishing uses those tested
-archives.
+cross-compilation is rejected. WebAssembly stays enabled for Ink’s Yoga layout engine. CI builds
+each of the six targets on a native runner, extracts its archive, and runs the end-to-end suite
+against that executable. Publishing uses those tested archives.
 
 Artifacts go to the ignored `release/` directory. The GitHub backend in mise detects platform
 archives by their names, such as `agentsrc-v0.1.0-linux-x64.tar.gz`.

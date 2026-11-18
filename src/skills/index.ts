@@ -467,7 +467,7 @@ async function hasOwnEntry(workspace: Workspace, name: string) {
   return isTable(skills) && skills[name] !== undefined;
 }
 
-async function getSkillRows(workspace: Workspace): Promise<SkillRow[]> {
+export async function getSkillRows(workspace: Workspace): Promise<SkillRow[]> {
   const { scope } = workspace;
   const lock = await loadSkillsLock(scope);
   const managed = new Set(workspace.lock.skills);

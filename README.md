@@ -12,7 +12,7 @@ Keep your agent skills and MCP servers in one configuration file.
 
 ## Installation
 
-With npm (Node.js 20.12 or later):
+Install with npm (Node 22 or later):
 
 ```bash
 npm install -g agentsrc
@@ -37,6 +37,18 @@ arc mcp add npm:@upstash/context7-mcp
 ```
 
 The selected skills and Context7 MCP server are now installed for your coding agents.
+
+## Interactive Mode
+
+Run `arc ui` to manage your project in a full-screen interface, or `arc ui -g` for your personal
+setup.
+
+Use Space to mark entries, Tab to switch between Skills and MCPs, and `/` to search. Selection stays
+across tabs and filters. Press `u` to update, `r` to repair, `i` to import, or `d` to remove
+selected entries. Review the combined plan, then press Enter to apply it.
+
+Press `a` to add skills or an MCP server. Press `g` to switch scope; this clears your selection.
+Press `?` for shortcuts or `q` to exit. Interactive mode requires a terminal and uses the keyboard.
 
 ## Configuration
 
@@ -94,6 +106,7 @@ See [account limits](docs/account-limits.md) for account support and banked rese
   compatibility.
 - [MCP servers](docs/mcp.md): imports, configuration, authentication, commands, and agent
   compatibility.
+- [Interactive mode](docs/interactive.md): keyboard controls, batch actions, and adding entries.
 - [Account limits](docs/account-limits.md): allowances, authentication, and reset claims.
 - [Contributing](CONTRIBUTING.md): development and releases.
 

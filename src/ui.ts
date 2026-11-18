@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { styleText } from "node:util";
 import type { InspectColor } from "node:util";
 
@@ -6,8 +7,19 @@ import { multiselect } from "@crustjs/prompts";
 
 import type { ConfigValue } from "#util/config-value.ts";
 
+export interface UiMessage {
+  kind: "info" | "warning";
+  text: string;
+}
+
+const Output = new AsyncLocalStorage<(message: UiMessage) => void>();
+
 /** All terminal output and prompts. Results go to stdout; everything else goes to stderr. */
 export const Ui = {
+  /** Routes operation messages into a full-screen session without changing CLI output. */
+  capture<Result>(output: (message: UiMessage) => void, run: () => Promise<Result>) {
+    return Output.run(output, run);
+  },
   /** Asks a yes or no question. Call it only when `isInteractive` is true. */
   async confirm(message: string) {
     const { confirm } = await import("@crustjs/prompts");
@@ -56,7 +68,13 @@ export const Ui = {
   },
 
   info(message: string) {
-    process.stderr.write(`${message}\n`);
+    const output = Output.getStore();
+
+    if (output) {
+      output({ kind: "info", text: message });
+    } else {
+      process.stderr.write(`${message}\n`);
+    }
   },
 
   /** True when a person can answer a prompt. */
@@ -84,6 +102,12 @@ export const Ui = {
   },
 
   warn(message: string) {
-    process.stderr.write(`warning: ${message}\n`);
+    const output = Output.getStore();
+
+    if (output) {
+      output({ kind: "warning", text: message });
+    } else {
+      process.stderr.write(`warning: ${message}\n`);
+    }
   },
 };
