@@ -53,6 +53,12 @@ test("a URL takes headers and a transport", () => {
   });
 });
 
+test("an explicit name does not bypass URL validation", () => {
+  expect(() => parseAddRequest(request("https://[", { name: "broken" }))).toThrow(
+    "Enter a valid HTTP or HTTPS URL."
+  );
+});
+
 test("text after -- is a command, and the positional argument is the name", () => {
   const parsed = parseAddRequest(
     request("local-db", { command: ["node", "./db.js", "--port", "1"], env: { A: "1" } })
@@ -87,6 +93,8 @@ test.each([
     "--transport does not apply to a command",
   ],
   ["a package that is only prefixes", request("mcp-server-"), "Pass --name"],
+  ["a scope without a package name", request("@example"), "is not a package name"],
+  ["an empty package range", request("tools@"), "Enter a version range after @"],
 ])("%s is a usage error", (_case, bad, message) => {
   expect(() => parseAddRequest(bad)).toThrow(message);
 });

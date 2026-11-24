@@ -83,12 +83,12 @@ automatically inherit global configuration.
 
 ## Common Commands
 
-| Task   | Skills                         | MCP Servers                    |
-| ------ | ------------------------------ | ------------------------------ |
-| Add    | `arc skills add <source>`      | `arc mcp add <package or URL>` |
-| List   | `arc skills list`              | `arc mcp list`                 |
-| Update | `arc skills update [names...]` | `arc mcp update [names...]`    |
-| Remove | `arc skills remove <names...>` | `arc mcp remove <names...>`    |
+| Task   | Skills                         | MCP Servers                              |
+| ------ | ------------------------------ | ---------------------------------------- |
+| Add    | `arc skills add <source>`      | [`arc mcp add`](docs/mcp.md#add-servers) |
+| List   | `arc skills list`              | `arc mcp list`                           |
+| Update | `arc skills update [names...]` | `arc mcp update [names...]`              |
+| Remove | `arc skills remove <names...>` | `arc mcp remove <names...>`              |
 
 You can also check subscription allowances for your signed-in accounts:
 

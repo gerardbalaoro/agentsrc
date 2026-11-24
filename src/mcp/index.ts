@@ -10,8 +10,7 @@ import { applyActions } from "#mcp/apply.ts";
 import { parseEnvValue, hasReference } from "#mcp/env.ts";
 import { describeAction, planServers } from "#mcp/plan.ts";
 import type { Plan, PlanOptions } from "#mcp/plan.ts";
-import { parseAddRequest } from "#mcp/spec.ts";
-import type { AddRequest } from "#mcp/spec.ts";
+import type { NamedEntry } from "#mcp/spec.ts";
 import { Ui } from "#ui.ts";
 import { reloadWorkspace, saveLock } from "#workspace.ts";
 import type { Workspace } from "#workspace.ts";
@@ -24,11 +23,10 @@ export async function installServers(workspace: Workspace, options: { force: boo
 /** Adds a server to the scope's own manifest, then installs it. */
 export async function addServer(
   workspace: Workspace,
-  request: AddRequest,
+  { name, entry }: NamedEntry,
   options: { force: boolean }
 ) {
-  const { entry, name } = parseAddRequest(request);
-  warnAboutSecrets(name, { ...request.env, ...request.headers });
+  warnAboutSecrets(name, ("url" in entry ? entry.headers : entry.env) ?? {});
 
   const { agents } = workspace.flags;
   const recorded = agents ? { ...entry, agents } : entry;

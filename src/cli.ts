@@ -2,7 +2,7 @@ import { Crust, CrustError, defineExtension, defineExtensionId } from "@crustjs/
 import { didYouMean, help, version } from "@crustjs/extensions";
 
 import { InitCommand } from "#commands/init.ts";
-import { McpCommand } from "#commands/mcp/index.ts";
+import { createMcpCommand } from "#commands/mcp/index.ts";
 import { SkillsCommand } from "#commands/skills/index.ts";
 import { SyncCommand } from "#commands/sync.ts";
 import { UiCommand } from "#commands/ui.ts";
@@ -34,7 +34,7 @@ export async function runCli(argv: string[]) {
     version: packageJson.version,
   })
     .extend(exitCode, help(), version(), didYouMean())
-    .add(InitCommand, SyncCommand, SkillsCommand, McpCommand, UiCommand, UsageCommand);
+    .add(InitCommand, SyncCommand, SkillsCommand, createMcpCommand(argv), UiCommand, UsageCommand);
 
   const code = await app.execute({ argv });
 

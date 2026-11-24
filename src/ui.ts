@@ -2,7 +2,8 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { styleText } from "node:util";
 import type { InspectColor } from "node:util";
 
-import { isCancel, log, note, select, spinner } from "@clack/prompts";
+import { isCancel, log, note, select, spinner, text } from "@clack/prompts";
+import type { TextOptions } from "@clack/prompts";
 import { multiselect } from "@crustjs/prompts";
 
 import type { ConfigValue } from "#util/config-value.ts";
@@ -27,8 +28,18 @@ export const Ui = {
     return await confirm({ default: false, message });
   },
 
-  async pick(message: string, options: { value: string; label: string; hint?: string }[]) {
-    const value = await select({ message, options, output: process.stderr });
+  async pick(
+    message: string,
+    options: { value: string; label: string; hint?: string }[],
+    signal?: AbortSignal
+  ) {
+    const value = await select({ message, options, output: process.stderr, signal });
+
+    return isCancel(value) ? null : value;
+  },
+
+  async text(options: Pick<TextOptions, "message" | "placeholder" | "signal" | "validate">) {
+    const value = await text({ ...options, output: process.stderr });
 
     return isCancel(value) ? null : value;
   },
@@ -40,7 +51,7 @@ export const Ui = {
     return !isCancel(value) && value;
   },
 
-  style(format: InspectColor | InspectColor[], text: string, enabled = true) {
+  style(format: InspectColor | InspectColor[], value: string, enabled = true) {
     const forced = process.env.FORCE_COLOR;
 
     const supported =
@@ -49,10 +60,10 @@ export const Ui = {
         : forced !== "0";
 
     if (!enabled || process.env.NO_COLOR !== undefined || !supported) {
-      return text;
+      return value;
     }
 
-    return styleText(format, text, { validateStream: false });
+    return styleText(format, value, { validateStream: false });
   },
 
   success(message: string) {
