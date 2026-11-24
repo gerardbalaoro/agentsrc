@@ -3,12 +3,13 @@ import { defineCommand } from "@crustjs/core";
 import { CommonFlagDefs, InstallFlagDefs, openWorkspace } from "#commands/flags.ts";
 import { AddServerFlagDefs, toAddRequest } from "#commands/mcp/add.ts";
 import { addServer, installServers } from "#mcp/index.ts";
+import { parseAddRequest } from "#mcp/spec.ts";
 
 export const InstallCommand = defineCommand(
   "install",
   {
     aliases: ["i"],
-    description: "Install MCP servers from the manifest. With an argument, the same as `add`.",
+    description: "Install MCP servers from the manifest. Pass a server to add it first.",
   },
   (command) =>
     command
@@ -25,6 +26,7 @@ export const InstallCommand = defineCommand(
 
         // Adding edits the manifest, so it is never a frozen run.
         const workspace = await openWorkspace({ ...flags, "frozen-lockfile": false });
-        await addServer(workspace, toAddRequest(args.spec, rawArgs, flags), { force });
+        const server = parseAddRequest(toAddRequest(args.spec, rawArgs, flags));
+        await addServer(workspace, server, { force });
       })
 );

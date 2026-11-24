@@ -6,22 +6,31 @@ selection.
 
 ## Add Servers
 
-Initialize the manifest if it does not exist, then add a package, URL, or local command:
+Choose the command that matches your server.
 
-```bash
-arc init
-arc mcp add npm:@upstash/context7-mcp
-arc mcp add https://mcp.linear.app/mcp --name linear
-arc mcp add local-tools -- node /absolute/path/to/server.js
-```
+| Server        | Example                                                       |
+| ------------- | ------------------------------------------------------------- |
+| npm package   | `arc mcp add npm:@upstash/context7-mcp`                       |
+| Remote URL    | `arc mcp add https://mcp.linear.app/mcp --name linear`        |
+| Local command | `arc mcp add local-tools -- node /absolute/path/to/server.js` |
 
-`add` saves the server in `.agents/agents.toml` and installs from the manifest. Use `--name` to
-choose a server name; otherwise agentsrc derives it from the package or hostname. For local
-commands, the positional name comes before `--` and the executable comes after it.
+`arc mcp add` saves the server in `.agents/agents.toml` and installs from the manifest.
 
-Package sources accept a version range, such as `npm:@upstash/context7-mcp@^1`. Use
-`--env KEY=VALUE` for package or command environments. Use `--header KEY=VALUE` and
-`--transport http|sse` for remote servers. Repeat `--env` or `--header` for multiple values.
+- **npm package.** agentsrc derives the server name from the package. Use `--name` to choose another
+  name. To limit the version, add a range such as `'npm:@upstash/context7-mcp@^1'`.
+- **Remote URL.** agentsrc derives the server name from the hostname unless you pass `--name`. Use
+  `--header KEY=VALUE` to set a header or `--transport sse` to select SSE instead of HTTP.
+- **Local command.** Put the server name and any `arc` options before `--`. Put the executable and
+  its arguments after `--`.
+
+Use `--env KEY=VALUE` to set an environment variable for an npm package or local command. Repeat
+`--env` or `--header` to set multiple values.
+
+In a terminal, run `arc mcp add` to choose a server type and enter its details. If you run
+`arc mcp add local-tools --`, `arc` asks for the executable and any arguments. Enter arguments as a
+JSON array of strings, such as `["./server.js", "--port", "3000"]`, or leave the field blank. If
+`arc` cannot derive a server name, it asks for one. Press Ctrl+C to cancel before any files change.
+In CI, without a terminal, or with `--yes`, supply all required details on the command line.
 
 ## Import Existing Servers
 
@@ -125,13 +134,13 @@ express.
 
 ## Install, List, Update, and Remove
 
-| Command                            | Result                                                                              |
-| ---------------------------------- | ----------------------------------------------------------------------------------- |
-| `arc mcp install`                  | Write declared servers into the selected agents' configuration.                     |
-| `arc mcp install <package or URL>` | Add the server to the manifest and install, like `add`.                             |
-| `arc mcp list`                     | Show servers, their status, and compatibility problems.                             |
-| `arc mcp update [names...]`        | Resolve newest package versions within configured ranges; omit names to update all. |
-| `arc mcp remove <names...>`        | Remove servers from the manifest and agent configuration.                           |
+| Command                     | Result                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------- |
+| `arc mcp install`           | Write declared servers into the selected agents' configuration.                       |
+| `arc mcp install <server>`  | Add and install a server with a complete command line. Use `arc mcp add` for prompts. |
+| `arc mcp list`              | Show servers, their status, and compatibility problems.                               |
+| `arc mcp update [names...]` | Resolve newest package versions within configured ranges; omit names to update all.   |
+| `arc mcp remove <names...>` | Remove servers from the manifest and agent configuration.                             |
 
 `install` also accepts the alias `i`; `update` accepts `up`. Use `arc sync` to install both MCP
 servers and skills. Removing an inherited server sets its entry to `false` in your manifest.
